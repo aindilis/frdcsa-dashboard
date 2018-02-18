@@ -1,0 +1,20 @@
+#!/usr/bin/perl -w
+
+use Dashboard::Applet;
+
+use UniLang::Agent::Agent;
+use UniLang::Util::Message;
+
+$UNIVERSAL::agent = UniLang::Agent::Agent->new
+  (Name => "FRDCSA-Applet",
+   ReceiveHandler => \&Receive);
+$UNIVERSAL::frdcsaapplet = Dashboard::Applet->new();
+
+
+sub Receive {
+  my %args = @_;
+  $UNIVERSAL::frdcsaapplet->ProcessMessage
+    (Message => $args{Message});
+}
+
+$UNIVERSAL::frdcsaapplet->Execute();

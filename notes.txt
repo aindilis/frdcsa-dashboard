@@ -1,0 +1,81 @@
+my $menus =
+  [
+   "Cognitive Prostheses and Intelligence Augmentation",
+   [
+    "Bluetooth Manager",
+    "LocationLogic",
+    "Notification Manager",
+   ],
+   "Software Conglomeration and Packaging",
+   [
+   ],
+   "Health Software",
+   [
+    "Gourmet2",
+   ],
+   "Artificial Intelligence and Knowledge-ism",
+   [
+   ],
+   "Educational Systems and Autodidactism",
+   [
+   ],
+   "POSI Project Collaboration Group",
+   [
+   ],
+   "Ethics",
+   [
+   ],
+  ]
+
+my $item = [
+	    "Bluetooth Manager" => "Manager",
+	    "CLEAR" => "CLEAR",
+	    "Critic Browser" => "AI and Knowledge-ism",
+	    "Entertainment Center" => "Entertainment",
+	    "Gourmet2" => "Gourmet",
+	    "LocationLogic" => "Manager",
+	    "Media Library" => "Entertainment/Education",
+	    "Notification Manager" => "Manager",
+	    "SPSE" => "Manager",
+	    "Job-Search Rapid Responder" => "Humanitarian",
+	    "Musical Notation" => "Entertainment",
+	   ];
+
+my $hierarchy =
+  {
+   "Cognitive Prostheses and Intelligence Augmentation" =>
+   {
+    Description => "These are several projects dedicated towards improving workflows and providing executive skills support, similar to the USC CALO, and CMU RADAR and PAL projects. This means that the computer helps to provide schedule and itinerary management, task management, email correspondence management, and so on.",
+    MajorSystems => [qw(UniLang PSE Verber Audience Manager)],
+   },
+   "Software Conglomeration and Packaging" =>
+   {
+    Description => "This track (a.k.a. CSA (Cluster, Study and Apply)) focuses on improving the distribution of software to the end user by solving the operating system packaging step of application distribution.",
+    MajorSystems => [qw(RADAR CSO Packager Architect)],
+   },
+   "Health Software" =>
+   {
+    Description => "This track focuses on developing useful software for improving the users health, such as providing software that functions as a doctor.",
+    MajorSystems => ["Akahige", "Gourmet Meal Planner"],
+   },
+   "Artificial Intelligence and Knowledge-ism" =>
+   {
+    Description => "This track involves the development of state of the art artificially intelligence systems that provide support to all other areas of the project.",
+    MajorSystems => [qw(Sayer Thinker FreeKBS Learner ReasonBase)],
+   },
+   "Educational Systems and Autodidactism" =>
+   {
+    Description => "This includes Intelligent Tutoring Systems, Experience Modelling Systems, and the like, responsible for educating users in whatever dimensions they wish.",
+    MajorSystems => [qw(CLEAR Study EMS ALL DigiLib)],
+   },
+   "POSI Project Collaboration Group" =>
+   {
+    Description => "Developing a system and community to help people work on projects together to maximize group collective problem solving capabilities. POSI Website. POSI-Core Website.",
+    MajorSystems => [qw(FieldGoal EMS)],
+   },
+   "Ethics" =>
+   {
+    Description => "",
+    MajorSystems => [],
+   },
+  };

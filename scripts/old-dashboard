@@ -1,0 +1,190 @@
+#!/usr/bin/perl -w
+
+use BOSS::Config;
+use PerlLib::EasyPersist;
+use Rival::PPI::_Util;
+
+use Data::Dumper;
+use File::Slurp;
+use PPI::Document;
+use PPI::Dumper;
+use Tk;
+
+my $mw = MainWindow->new
+  (
+   -title => "FRDCSA Dashboard",
+   -height => 600,
+   -width => 800,
+  );
+
+my $persister = PerlLib::EasyPersist->new
+  (
+   Namespace => "frdcsa-dashboard",
+   Expires => "1 month",
+  );
+
+if (0) {
+  $persister->CacheObj->clear;
+  exit(0);
+}
+
+my $res = $persister->CacheObj->get("specs");
+if (! defined $res) {
+  $res = BuildIndexOfAvailableSoftware();
+  $persister->CacheObj->set("specs",$res,"1 month");
+}
+
+StartTk
+  (
+   Specifications => $res->{Specifications},
+  );
+
+sub BuildIndexOfAvailableSoftware {
+  my %args = @_;
+  # list all scripts, and extract their options
+  # list all modules and extract their options
+  $specifications = {};
+  my $commands =
+    [
+     "`boss list_modules`",
+     "`boss list_scripts`",
+    ];
+  foreach my $command (@$commands) {
+    my $res = $persister->Get
+      (
+       Command => $command,
+      );
+    # now take this data, and use it to parse the items with PPI
+    if ($res->{Success}) {
+      foreach my $file (split /\n/, $res->{Result}) {
+	# correct the path
+	if ($file !~ /^\// and $file =~ /\.pm$/i) {
+	  $file = "/usr/share/perl5/".$file;
+	}
+	my $res2 = ExtractSpecificationInformation
+	  (
+	   File => $file,
+	  );
+	if ($res2->{Success}) {
+	  # okay add this to the system
+	  $specifications->{$res2->{Result}->{InvocationCommand}}->{Specification} = $res2->{Result}->{Specification};
+	  # okay now attempt to do something with this
+	}
+      }
+    }
+  }
+  return {
+	  Success => 1,
+	  Specifications => $specifications,
+	 };
+}
+
+sub ExtractSpecificationInformation {
+  my %args = @_;
+  my $c = read_file($args{File});
+  if ($c =~ /\$specification/) {
+    print "<".$args{File}.">\n";
+    my $doc = PPI::Document->new($args{File});
+    # my $dumper = PPI::Dumper->new($doc);
+    # $dumper->print;
+    my $nodes = $doc->find
+      (
+       sub { $_[1]->isa('PPI::Statement') and
+	       [$_[1]->children]->[0]->isa('PPI::Token::Symbol') and
+		 [$_[1]->children]->[0]->symbol eq '$specification' }
+      );
+    foreach my $node (@$nodes) {
+      my $res = ProcessVariables(Node => $node);
+      if ($res->{Success}) {
+	return {
+		Success => 1,
+		Result => {
+			   Specification => NodeSerialize(Node => $res->{Result}->{RHSs}->[0]),
+			   InvocationCommand => $args{File},
+			  },
+	       };
+      }
+    }
+    # WaitForIt();
+    # okay, now extract out the specification strings, module or
+    # script name and invocation method
+    return {
+	    Success => 0,
+	   };
+  }
+  return {
+	  Success => 0,
+	 };
+}
+
+sub WaitForIt {
+  my $it = <STDIN>;
+  $it = undef;
+}
+
+sub ProcessSpecification {
+  my %args = @_;
+  my $command = $args{InvocationCommand};
+  my $module = $args{Module};
+  my $specification = $specifications->{$module};
+  # print Dumper([$command, $specification]);
+  my $config = BOSS::Config->new
+    (
+     Spec => $specification,
+     ConfFile => "",
+    );
+  my $conf = $config->CLIConfig;
+  # print out all the options
+  print Dumper($conf);
+
+  # Since left and right are taken, bottom will not work...
+  my $top1 = $mw->Toplevel;
+  $top1->title( "Options for $module" );
+  $top1->Text("hello")->pack(-size => 'left');
+}
+
+sub StartTk {
+  my %args = @_;
+  $frame = $mw->Frame(-relief => 'flat');
+  $frame->pack(-side => 'top', -fill => 'y', -anchor => 'center');
+
+  $menu = $mw->Frame(-relief => 'raised', -borderwidth => '1');
+  $menu->pack(-before => $frame, -side => 'top', -fill => 'x');
+
+  $menu_file = $menu->Menubutton(-text => 'File', -underline => 0);
+  $menu_file->command(-label => 'load ...', -command => sub { },
+		      -underline => 0);
+  $menu_file->command(-label => 'Exit', -command => sub { }, -underline => 0);
+  $menu_file->pack(-side => 'left');
+
+  # my $photo = $mw->Photo(-file => "scater.gif");
+  # $photo->pack(-side => 'top', -fill => 'y', -anchor => 'center');
+
+  my $box = $mw->Listbox(
+			 -relief => 'sunken',
+			 -height  => 5,
+			 -setgrid => 1,
+			);
+  my @items = sort keys %{$args{Specifications}};
+  # my @items = qw(One Two Three Four Five Six Seven
+  # Eight Nine Ten Eleven Twelve);
+  foreach (@items) {
+    $box->insert('end', $_);
+  }
+  $box->bind('all', '<Control-c>' => \&exit);
+  $box->bind('<Double-Button-1>' => sub {
+	       my($listbox) = @_;
+	       foreach (split ' ', $listbox->get('active')) {
+		 ProcessSpecification
+		   (
+		    Module => $_,
+		    InvocationCommand => "",
+		   );
+	       }
+	     });
+  my $scroll = $mw->Scrollbar(-command => ['yview', $box]);
+  $box->configure(-yscrollcommand => ['set', $scroll]);
+  $box->pack(-side => 'left', -fill => 'both', -expand => 1);
+  $scroll->pack(-side => 'right', -fill => 'y');
+  MainLoop;
+}
